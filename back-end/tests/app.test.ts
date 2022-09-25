@@ -182,6 +182,40 @@ describe('Tests POST /recommendations/:id/downvote', () => {
     });
 });
 
+describe('Tests GET /recommendations', () => {
+    it.todo(
+        'Tests if receives 10 last recommendations, if there is more than 10'
+    );
+    it.todo(
+        'Tests if receives all recommendations, if there is less or equal 10'
+    );
+    it.todo('Check if response is properly formatted');
+});
+
+describe('Tests GET /recommendations/:id', () => {
+    it.todo('Tests if response to valid id is the correct recommendation');
+    it.todo('Tests if error occurs when invalid ID is received');
+});
+
+describe('Tests GET /recommendations/random', () => {
+    it.todo('Tests if an error occurs when recommendations DB is empty');
+    it.todo('Tests if response is properly formatted');
+    it.todo(
+        'Tests if response is properly random, based on predefined criteria'
+    );
+});
+
+describe('Tests GET /recommendations/top/:amount', () => {
+    it.todo(
+        'Tests if receives the correct amount when DB size is bigger than amount'
+    );
+    it.todo(
+        'Tests if receives all recommendations when DB size is smaller than amount'
+    );
+    it.todo('Tests if received recommendations are in fact the most upvoted');
+    it.todo('Tests if receives recommendations in descending order');
+});
+
 afterAll(async () => {
     await prisma.$disconnect();
 });
