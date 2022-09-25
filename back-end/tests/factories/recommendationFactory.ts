@@ -19,3 +19,13 @@ export async function create() {
         youtubeLink: randomVideo
     };
 }
+
+export async function createMany() {
+    const recommendationsArray = videos.map((video) => {
+        return {
+            name: faker.lorem.words(4),
+            youtubeLink: video
+        };
+    });
+    return recommendationsArray;
+}

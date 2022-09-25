@@ -4,6 +4,7 @@ import { prisma } from '../src/database';
 import * as scenarios from './factories/scenarioFactory';
 import * as recommendationFactory from './factories/recommendationFactory';
 import { faker } from '@faker-js/faker';
+import { Recommendation } from '@prisma/client';
 
 beforeEach(async () => {
     await scenarios.deleteAllDbData();
@@ -11,7 +12,7 @@ beforeEach(async () => {
 
 const server = supertest(app);
 
-describe('Tests POSTS /recommendations', () => {
+describe('Tests POST /recommendations', () => {
     it('Tests if valid POST is successfully stored on DB', async () => {
         const recommendationBody = await recommendationFactory.create();
 
@@ -29,11 +30,14 @@ describe('Tests POSTS /recommendations', () => {
 
     it('Tests if an error occurs when the name string is not defined', async () => {
         const recommendationBody = await recommendationFactory.create();
-        delete recommendationBody.name;
 
+        const incompleteBody = {
+            ...recommendationBody,
+            youtubeLink: undefined
+        };
         const result = await server
             .post('/recommendations')
-            .send(recommendationBody);
+            .send(incompleteBody);
 
         expect(result.status).toBe(422);
     });
@@ -50,12 +54,60 @@ describe('Tests POSTS /recommendations', () => {
     });
 });
 
-describe('Tests POSTS /recommendations/:id/upvote', () => {
-    it.todo('Tests if user upvote is successfully added to DB');
-    it.todo('Tests if error occurs when invalid ID is received');
+describe('Tests POST /recommendations/:id/upvote', () => {
+    it('Tests if user upvote is successfully added to DB', async () => {
+        await scenarios.populateDB();
+        const recommendation = await prisma.$queryRaw`
+            SELECT *
+                FROM recommendations
+                ORDER BY random()
+                LIMIT 1`;
+        console.log(recommendation);
+        const recommendationId: number = recommendation[0].id;
+        const result = await server.post(
+            `/recommendations/${recommendationId}/upvote`
+        );
+
+        const upvotedRecommendation = await prisma.recommendation.findFirst({
+            where: {
+                id: recommendationId
+            }
+        });
+
+        let upvoteDifference = 0;
+
+        if (upvotedRecommendation) {
+            upvoteDifference =
+                upvotedRecommendation?.score - recommendation[0].score;
+        }
+
+        expect(result.status).toBe(200);
+        expect(upvoteDifference).toBe(1);
+    });
+    it('Tests if error occurs when invalid ID is received', async () => {
+        await scenarios.populateDB();
+
+        const unreasonableId = 999;
+
+        const idExists = await prisma.recommendation.findFirst({
+            where: {
+                id: unreasonableId
+            }
+        });
+
+        if (idExists) {
+            return;
+        }
+
+        const result = await server.post(
+            `/recommendations/${unreasonableId}/upvote`
+        );
+
+        expect(result.status).toBe(404);
+    });
 });
 
-describe('Tests POSTS /recommendations/:id/downvote', () => {
+describe('Tests POST /recommendations/:id/downvote', () => {
     it.todo('Tests if user downvote is successfully added to DB');
     it.todo('Tests if error occurs when invalid ID is received');
     it.todo('Tests if recommendation is deleted when score hits -5');
