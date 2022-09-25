@@ -8,9 +8,9 @@ export async function deleteAllDbData() {
 export async function populateDB() {
     const recommendationsArray = await recommendationFactory.createMany();
 
-    recommendationsArray.forEach(async (recommendationBody) => {
-        await prisma.recommendation.create({
+    for (const recommendationBody of recommendationsArray) {
+        return await prisma.recommendation.create({
             data: { ...recommendationBody }
         });
-    });
+    }
 }
