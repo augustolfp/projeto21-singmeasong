@@ -4,7 +4,6 @@ import { prisma } from '../src/database';
 import * as scenarios from './factories/scenarioFactory';
 import * as recommendationFactory from './factories/recommendationFactory';
 import { faker } from '@faker-js/faker';
-import { Recommendation } from '@prisma/client';
 
 beforeEach(async () => {
     await scenarios.deleteAllDbData();
@@ -108,9 +107,79 @@ describe('Tests POST /recommendations/:id/upvote', () => {
 });
 
 describe('Tests POST /recommendations/:id/downvote', () => {
-    it.todo('Tests if user downvote is successfully added to DB');
-    it.todo('Tests if error occurs when invalid ID is received');
-    it.todo('Tests if recommendation is deleted when score hits -5');
+    it('Tests if user downvote is successfully added to DB', async () => {
+        await scenarios.populateDB();
+        const recommendation = await prisma.$queryRaw`
+            SELECT *
+                FROM recommendations
+                ORDER BY random()
+                LIMIT 1`;
+
+        const recommendationId: number = recommendation[0].id;
+        const result = await server.post(
+            `/recommendations/${recommendationId}/downvote`
+        );
+
+        const upvotedRecommendation = await prisma.recommendation.findFirst({
+            where: {
+                id: recommendationId
+            }
+        });
+
+        let upvoteDifference = 0;
+
+        if (upvotedRecommendation) {
+            upvoteDifference =
+                upvotedRecommendation?.score - recommendation[0].score;
+        }
+
+        expect(result.status).toBe(200);
+        expect(upvoteDifference).toBe(-1);
+    });
+    it('Tests if error occurs when invalid ID is received', async () => {
+        await scenarios.populateDB();
+
+        const unreasonableId = 999;
+
+        const idExists = await prisma.recommendation.findFirst({
+            where: {
+                id: unreasonableId
+            }
+        });
+
+        if (idExists) {
+            return;
+        }
+
+        const result = await server.post(
+            `/recommendations/${unreasonableId}/downvote`
+        );
+
+        expect(result.status).toBe(404);
+    });
+    it('Tests if recommendation is deleted when score reaches -6', async () => {
+        await scenarios.populateDB();
+
+        const recommendation = await prisma.$queryRaw`
+        SELECT *
+            FROM recommendations
+            ORDER BY random()
+            LIMIT 1`;
+
+        const recommendationId: number = recommendation[0].id;
+
+        for (let i = 0; i < 6; i++) {
+            await server.post(`/recommendations/${recommendationId}/downvote`);
+        }
+
+        const idExists = await prisma.recommendation.findFirst({
+            where: {
+                id: recommendationId
+            }
+        });
+
+        expect(idExists).toBeFalsy();
+    });
 });
 
 afterAll(async () => {
