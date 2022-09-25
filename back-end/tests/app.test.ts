@@ -55,7 +55,7 @@ describe('Tests POST /recommendations', () => {
 
 describe('Tests POST /recommendations/:id/upvote', () => {
     it('Tests if user upvote is successfully added to DB', async () => {
-        await scenarios.populateDB();
+        await scenarios.populateDB(10);
         const recommendation = await prisma.$queryRaw`
             SELECT *
                 FROM recommendations
@@ -84,7 +84,7 @@ describe('Tests POST /recommendations/:id/upvote', () => {
         expect(upvoteDifference).toBe(1);
     });
     it('Tests if error occurs when invalid ID is received', async () => {
-        await scenarios.populateDB();
+        await scenarios.populateDB(10);
 
         const unreasonableId = 999;
 
@@ -108,7 +108,7 @@ describe('Tests POST /recommendations/:id/upvote', () => {
 
 describe('Tests POST /recommendations/:id/downvote', () => {
     it('Tests if user downvote is successfully added to DB', async () => {
-        await scenarios.populateDB();
+        await scenarios.populateDB(10);
         const recommendation = await prisma.$queryRaw`
             SELECT *
                 FROM recommendations
@@ -137,7 +137,7 @@ describe('Tests POST /recommendations/:id/downvote', () => {
         expect(upvoteDifference).toBe(-1);
     });
     it('Tests if error occurs when invalid ID is received', async () => {
-        await scenarios.populateDB();
+        await scenarios.populateDB(10);
 
         const unreasonableId = 999;
 
@@ -158,7 +158,7 @@ describe('Tests POST /recommendations/:id/downvote', () => {
         expect(result.status).toBe(404);
     });
     it('Tests if recommendation is deleted when score reaches -6', async () => {
-        await scenarios.populateDB();
+        await scenarios.populateDB(10);
 
         const recommendation = await prisma.$queryRaw`
         SELECT *
