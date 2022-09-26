@@ -17,14 +17,31 @@ export async function create() {
     };
 }
 
-export function createMany(amount: number) {
+function createRandomScore() {
+    return faker.datatype.number({
+        min: -3,
+        max: 200
+    });
+}
+
+export function createMany(amount: number, randomScores?: boolean) {
     const recommendationsArray = [];
 
-    for (let i = 0; i < amount; i++) {
-        recommendationsArray.push({
-            name: faker.lorem.words(4),
-            youtubeLink: pickVideoFromList()
-        });
+    if (randomScores) {
+        for (let i = 0; i < amount; i++) {
+            recommendationsArray.push({
+                name: faker.lorem.words(4),
+                youtubeLink: pickVideoFromList(),
+                score: createRandomScore()
+            });
+        }
+    } else {
+        for (let i = 0; i < amount; i++) {
+            recommendationsArray.push({
+                name: faker.lorem.words(4),
+                youtubeLink: pickVideoFromList()
+            });
+        }
     }
 
     return recommendationsArray;

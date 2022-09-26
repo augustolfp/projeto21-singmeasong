@@ -290,14 +290,70 @@ describe('Tests GET /recommendations/random', () => {
 });
 
 describe('Tests GET /recommendations/top/:amount', () => {
-    it.todo(
-        'Tests if receives the correct amount when DB size is bigger than amount'
-    );
-    it.todo(
-        'Tests if receives all recommendations when DB size is smaller than amount'
-    );
-    it.todo('Tests if received recommendations are in fact the most upvoted');
-    it.todo('Tests if receives recommendations in descending order');
+    it('Tests if receives the correct amount when DB size is bigger than amount', async () => {
+        const amount = faker.datatype.number({
+            min: 5,
+            max: 50
+        });
+
+        const recommendationSurplus = faker.datatype.number({
+            min: 1,
+            max: 10
+        });
+
+        await scenarios.populateDB(amount + recommendationSurplus, true);
+
+        const result = await server.get(`/recommendations/top/${amount}`);
+
+        expect(result.status).toBe(200);
+        expect(result.body.length).toBe(amount);
+    });
+    it('Tests if receives all recommendations when DB size is smaller than amount', async () => {
+        const amount = faker.datatype.number({
+            min: 20,
+            max: 50
+        });
+
+        const recommendationShortage = faker.datatype.number({
+            min: 0,
+            max: 19
+        });
+
+        await scenarios.populateDB(amount - recommendationShortage, true);
+
+        const result = await server.get(`/recommendations/top/${amount}`);
+        const allRecommendations = await prisma.recommendation.findMany();
+
+        expect(result.status).toBe(200);
+        expect(result.body.length).toBe(allRecommendations.length);
+    });
+
+    it('Tests if received recommendations are in fact the most upvoted and in descending order', async () => {
+        const amount = faker.datatype.number({
+            min: 5,
+            max: 50
+        });
+
+        const recommendationSurplus = faker.datatype.number({
+            min: 1,
+            max: 10
+        });
+
+        await scenarios.populateDB(amount + recommendationSurplus, true);
+
+        const result = await server.get(`/recommendations/top/${amount}`);
+        const sortedRecommendations = await prisma.recommendation.findMany({
+            orderBy: { score: 'desc' }
+        });
+
+        expect(result.status).toBe(200);
+        expect(JSON.stringify(result.body[0])).toEqual(
+            JSON.stringify(sortedRecommendations[0])
+        );
+        expect(JSON.stringify(result.body[amount - 1])).toEqual(
+            JSON.stringify(sortedRecommendations[amount - 1])
+        );
+    });
 });
 
 afterAll(async () => {
