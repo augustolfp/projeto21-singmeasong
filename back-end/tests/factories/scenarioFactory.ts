@@ -1,5 +1,5 @@
-import { prisma } from '../../src/database';
-import * as recommendationFactory from './recommendationFactory';
+import { prisma } from '../../src/database.js';
+import * as recommendationFactory from './recommendationFactory.js';
 
 export async function deleteAllDbData() {
     await prisma.$executeRaw`TRUNCATE TABLE recommendations`;
