@@ -1,5 +1,9 @@
 import { faker } from '@faker-js/faker';
 
+beforeEach(async () => {
+    await cy.request('POST', 'http://localhost:5000/e2e/reset', {});
+});
+
 describe('Test insert recommendation routine', () => {
     it('Tests if user can insert valid youtube video', () => {
         const videos = [
@@ -20,6 +24,13 @@ describe('Test insert recommendation routine', () => {
         cy.visit('http://localhost:3000');
         cy.get('[data-cy="nameInput"]').type(newRecommendation.name);
         cy.get('[data-cy="ytLinkInput"]').type(newRecommendation.youtubeLink);
+        cy.intercept('POST', 'http://localhost:5000/recommendations').as(
+            'recommInsertion'
+        );
         cy.get('[data-cy="postButton"]').click();
+        cy.wait('@recommInsertion');
+
+        cy.url().should('equal', 'http://localhost:3000/');
+        cy.contains(newRecommendation.name).should('be.visible');
     });
 });
