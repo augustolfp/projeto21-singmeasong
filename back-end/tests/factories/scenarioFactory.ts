@@ -9,7 +9,7 @@ export async function populateDB(amount: number) {
     const recommendationsArray = await recommendationFactory.createMany(amount);
 
     for (const recommendationBody of recommendationsArray) {
-        return await prisma.recommendation.create({
+        await prisma.recommendation.create({
             data: { ...recommendationBody }
         });
     }
