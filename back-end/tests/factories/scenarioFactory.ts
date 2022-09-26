@@ -5,7 +5,10 @@ export async function deleteAllDbData() {
     await prisma.$executeRaw`TRUNCATE TABLE recommendations`;
 }
 
-export async function populateDB(amount: number, randomScores?: boolean) {
+export async function populateDB(
+    amount: number,
+    randomScores?: [min: number, max: number]
+) {
     const recommendationsArray = recommendationFactory.createMany(
         amount,
         randomScores

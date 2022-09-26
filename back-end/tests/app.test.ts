@@ -4,6 +4,7 @@ import { prisma } from '../src/database';
 import * as scenarios from './factories/scenarioFactory';
 import * as recommendationFactory from './factories/recommendationFactory';
 import { faker } from '@faker-js/faker';
+import 'jest-extended';
 
 beforeEach(async () => {
     await scenarios.deleteAllDbData();
@@ -282,11 +283,188 @@ describe('Tests GET /recommendations/:id', () => {
 });
 
 describe('Tests GET /recommendations/random', () => {
-    it.todo('Tests if an error occurs when recommendations DB is empty');
-    it.todo('Tests if response is properly formatted');
-    it.todo(
-        'Tests if response is properly random, based on predefined criteria'
-    );
+    it('Tests if an error occurs when recommendations DB is empty', async () => {
+        const result = await server.get('/recommendations/random');
+
+        expect(result.status).toBe(404);
+    });
+    it('Tests if response is properly formatted', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 11,
+            max: 30
+        });
+        await scenarios.populateDB(numOfRecommendations, [-3, 200]);
+
+        const result = await server.get('/recommendations/random');
+
+        const getFromDb = await prisma.recommendation.findUnique({
+            where: {
+                id: result.body.id
+            }
+        });
+
+        expect(result.status).toBe(200);
+        expect(JSON.stringify(result.body)).toEqual(JSON.stringify(getFromDb));
+    });
+    it('Tests if response is properly random, based on predefined criteria, for scores within [-5, 10] range', async () => {
+        const scores = [];
+        const confidenceInterval = 5;
+        const sampleSize = 500;
+        const minScore = -5;
+        const maxScore = 10;
+
+        await scenarios.populateDB(sampleSize, [minScore, maxScore]);
+        const query = await prisma.recommendation.findMany({
+            select: {
+                score: true
+            },
+            orderBy: {
+                score: 'asc'
+            }
+        });
+
+        const dbScores = query.map((element) => {
+            return element.score;
+        });
+
+        const dbAverage = dbScores.reduce((a, b) => a + b, 0) / dbScores.length;
+        const dbMedian = dbScores[Math.floor(dbScores.length / 2)];
+
+        for (let i = 0; i < sampleSize; i++) {
+            const result = await server.get('/recommendations/random');
+            if (result.body.score) {
+                scores.push(result.body.score);
+            }
+        }
+        scores.sort(function (a, b) {
+            return a - b;
+        });
+        const statisticalAverage =
+            scores.reduce((a, b) => a + b, 0) / scores.length;
+
+        const statisticalMedian = scores[Math.floor(scores.length / 2)];
+
+        expect(statisticalAverage).toBeWithin(
+            dbAverage - confidenceInterval,
+            dbAverage + confidenceInterval
+        );
+
+        expect(statisticalMedian).toBeWithin(
+            dbMedian - confidenceInterval,
+            dbMedian + confidenceInterval
+        );
+    }, 60000);
+
+    it('Tests if response is properly random, based on predefined criteria, for scores within [11, 100] range', async () => {
+        const scores = [];
+        const confidenceInterval = 30;
+        const sampleSize = 900;
+        const minScore = 11;
+        const maxScore = 100;
+
+        await scenarios.populateDB(sampleSize, [minScore, maxScore]);
+
+        const query = await prisma.recommendation.findMany({
+            select: {
+                score: true
+            },
+            orderBy: {
+                score: 'asc'
+            }
+        });
+
+        const dbScores = query.map((element) => {
+            return element.score;
+        });
+
+        const dbAverage = dbScores.reduce((a, b) => a + b, 0) / dbScores.length;
+        const dbMedian = dbScores[Math.floor(dbScores.length / 2)];
+
+        for (let i = 0; i < sampleSize; i++) {
+            const result = await server.get('/recommendations/random');
+            if (result.body.score) {
+                scores.push(result.body.score);
+            }
+        }
+        scores.sort(function (a, b) {
+            return a - b;
+        });
+        const statisticalAverage =
+            scores.reduce((a, b) => a + b, 0) / scores.length;
+
+        const statisticalMedian = scores[Math.floor(scores.length / 2)];
+
+        expect(statisticalAverage).toBeWithin(
+            dbAverage - confidenceInterval,
+            dbAverage + confidenceInterval
+        );
+
+        expect(statisticalMedian).toBeWithin(
+            dbMedian - confidenceInterval,
+            dbMedian + confidenceInterval
+        );
+    }, 60000);
+
+    it('Tests if response is properly random, based on predefined criteria, for scores within [-5, 100] range', async () => {
+        const scores = [];
+        const confidenceInterval = 0.1;
+        const samplesWithScoreHigherThan10 = 500;
+        const samplesWithScoreLowerThan10 = 500;
+        const sampleSize =
+            samplesWithScoreHigherThan10 + samplesWithScoreLowerThan10;
+        const minScore = -5;
+        const maxScore = 100;
+
+        await scenarios.populateDB(samplesWithScoreHigherThan10, [
+            11,
+            maxScore
+        ]);
+        await scenarios.populateDB(samplesWithScoreLowerThan10, [minScore, 10]);
+        const query = await prisma.recommendation.findMany({
+            select: {
+                score: true
+            },
+            orderBy: {
+                score: 'asc'
+            }
+        });
+
+        const dbScores = query.map((element) => {
+            return element.score;
+        });
+
+        const dbScoresBiggerThan10 = dbScores.filter((score) => {
+            return score > 10;
+        }).length;
+
+        const ratioOfDbScoresBiggerthan10 =
+            dbScoresBiggerThan10 / dbScores.length;
+
+        for (let i = 0; i < sampleSize; i++) {
+            const result = await server.get('/recommendations/random');
+            if (result.body.score) {
+                scores.push(result.body.score);
+            }
+        }
+        scores.sort(function (a, b) {
+            return a - b;
+        });
+
+        const statisticalScoresBiggerThan10 = scores.filter((score) => {
+            return score > 10;
+        }).length;
+        const ratioOfStatisticalScoresBiggerthan10 =
+            statisticalScoresBiggerThan10 / scores.length;
+
+        expect(ratioOfStatisticalScoresBiggerthan10).toBeWithin(
+            0.7 - confidenceInterval,
+            0.7 + confidenceInterval
+        );
+        expect(ratioOfDbScoresBiggerthan10).toBeWithin(
+            0.5 - confidenceInterval,
+            0.5 + confidenceInterval
+        );
+    }, 60000);
 });
 
 describe('Tests GET /recommendations/top/:amount', () => {
@@ -301,7 +479,7 @@ describe('Tests GET /recommendations/top/:amount', () => {
             max: 10
         });
 
-        await scenarios.populateDB(amount + recommendationSurplus, true);
+        await scenarios.populateDB(amount + recommendationSurplus, [-3, 200]);
 
         const result = await server.get(`/recommendations/top/${amount}`);
 
@@ -319,7 +497,7 @@ describe('Tests GET /recommendations/top/:amount', () => {
             max: 19
         });
 
-        await scenarios.populateDB(amount - recommendationShortage, true);
+        await scenarios.populateDB(amount - recommendationShortage, [-3, 200]);
 
         const result = await server.get(`/recommendations/top/${amount}`);
         const allRecommendations = await prisma.recommendation.findMany();
@@ -339,7 +517,7 @@ describe('Tests GET /recommendations/top/:amount', () => {
             max: 10
         });
 
-        await scenarios.populateDB(amount + recommendationSurplus, true);
+        await scenarios.populateDB(amount + recommendationSurplus, [-3, 200]);
 
         const result = await server.get(`/recommendations/top/${amount}`);
         const sortedRecommendations = await prisma.recommendation.findMany({

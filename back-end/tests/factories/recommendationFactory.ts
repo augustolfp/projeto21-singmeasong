@@ -17,14 +17,17 @@ export async function create() {
     };
 }
 
-function createRandomScore() {
+function createRandomScore(min: number, max: number) {
     return faker.datatype.number({
-        min: -3,
-        max: 200
+        min,
+        max
     });
 }
 
-export function createMany(amount: number, randomScores?: boolean) {
+export function createMany(
+    amount: number,
+    randomScores?: [min: number, max: number]
+) {
     const recommendationsArray = [];
 
     if (randomScores) {
@@ -32,7 +35,7 @@ export function createMany(amount: number, randomScores?: boolean) {
             recommendationsArray.push({
                 name: faker.lorem.words(4),
                 youtubeLink: pickVideoFromList(),
-                score: createRandomScore()
+                score: createRandomScore(randomScores[0], randomScores[1])
             });
         }
     } else {
