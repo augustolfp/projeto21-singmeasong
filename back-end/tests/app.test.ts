@@ -234,8 +234,51 @@ describe('Tests GET /recommendations', () => {
 });
 
 describe('Tests GET /recommendations/:id', () => {
-    it.todo('Tests if response to valid id is the correct recommendation');
-    it.todo('Tests if error occurs when invalid ID is received');
+    it('Tests if response to valid id is the correct recommendation', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 11,
+            max: 30
+        });
+        await scenarios.populateDB(numOfRecommendations);
+
+        const recommendation = await prisma.$queryRaw`
+        SELECT *
+            FROM recommendations
+            ORDER BY random()
+            LIMIT 1`;
+
+        const result = await server.get(
+            `/recommendations/${recommendation[0].id}`
+        );
+        expect(result.status).toBe(200);
+        expect(JSON.stringify(result.body)).toEqual(
+            JSON.stringify(recommendation[0])
+        );
+    });
+    it('Tests if error occurs when invalid ID is received', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 11,
+            max: 30
+        });
+
+        await scenarios.populateDB(numOfRecommendations);
+
+        const unreasonableId = 9999;
+
+        const idExists = await prisma.recommendation.findFirst({
+            where: {
+                id: unreasonableId
+            }
+        });
+
+        if (idExists) {
+            return;
+        }
+
+        const result = await server.get(`/recommendations/${unreasonableId}`);
+
+        expect(result.status).toBe(404);
+    });
 });
 
 describe('Tests GET /recommendations/random', () => {
