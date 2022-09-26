@@ -61,7 +61,7 @@ describe('Tests POST /recommendations/:id/upvote', () => {
                 FROM recommendations
                 ORDER BY random()
                 LIMIT 1`;
-        console.log(recommendation);
+
         const recommendationId: number = recommendation[0].id;
         const result = await server.post(
             `/recommendations/${recommendationId}/upvote`
@@ -183,13 +183,54 @@ describe('Tests POST /recommendations/:id/downvote', () => {
 });
 
 describe('Tests GET /recommendations', () => {
-    it.todo(
-        'Tests if receives 10 last recommendations, if there is more than 10'
-    );
-    it.todo(
-        'Tests if receives all recommendations, if there is less or equal 10'
-    );
-    it.todo('Check if response is properly formatted');
+    it('Tests if receives 10 last recommendations, if there is more than 10', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 11,
+            max: 30
+        });
+
+        await scenarios.populateDB(numOfRecommendations);
+
+        const result = await server.get('/recommendations');
+
+        expect(result.status).toBe(200);
+        expect(result.body.length).toBe(10);
+    });
+    it('Tests if receives all recommendations, if there is less or equal 10', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 1,
+            max: 10
+        });
+
+        await scenarios.populateDB(numOfRecommendations);
+
+        const result = await server.get('/recommendations');
+
+        expect(result.status).toBe(200);
+        expect(result.body.length).toBe(numOfRecommendations);
+    });
+    it('Check if response is properly formatted', async () => {
+        const numOfRecommendations = faker.datatype.number({
+            min: 11,
+            max: 30
+        });
+
+        await scenarios.populateDB(numOfRecommendations);
+
+        const sortedRecommendations = await prisma.recommendation.findMany({
+            orderBy: { id: 'desc' }
+        });
+
+        const result = await server.get('/recommendations');
+
+        expect(result.status).toBe(200);
+        expect(JSON.stringify(result.body[0])).toEqual(
+            JSON.stringify(sortedRecommendations[0])
+        );
+        expect(JSON.stringify(result.body[9])).toEqual(
+            JSON.stringify(sortedRecommendations[9])
+        );
+    });
 });
 
 describe('Tests GET /recommendations/:id', () => {
