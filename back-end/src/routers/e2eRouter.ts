@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as e2eController from '../controllers/e2eController.js';
+import * as e2eController from '../controllers/e2eController';
 
 const e2eRouter = Router();
 

@@ -1,6 +1,7 @@
 import supertest from 'supertest';
 import app from '../src/app';
 import { prisma } from '../src/database';
+import { IRecData } from './types/recommendationTypes';
 import * as scenarios from './factories/scenarioFactory';
 import * as recommendationFactory from './factories/recommendationFactory';
 import { faker } from '@faker-js/faker';
@@ -57,7 +58,7 @@ describe('Tests POST /recommendations', () => {
 describe('Tests POST /recommendations/:id/upvote', () => {
     it('Tests if user upvote is successfully added to DB', async () => {
         await scenarios.populateDB(10);
-        const recommendation = await prisma.$queryRaw`
+        const recommendation = await prisma.$queryRaw<IRecData[]>`
             SELECT *
                 FROM recommendations
                 ORDER BY random()
@@ -110,7 +111,7 @@ describe('Tests POST /recommendations/:id/upvote', () => {
 describe('Tests POST /recommendations/:id/downvote', () => {
     it('Tests if user downvote is successfully added to DB', async () => {
         await scenarios.populateDB(10);
-        const recommendation = await prisma.$queryRaw`
+        const recommendation = await prisma.$queryRaw<IRecData[]>`
             SELECT *
                 FROM recommendations
                 ORDER BY random()
@@ -161,7 +162,7 @@ describe('Tests POST /recommendations/:id/downvote', () => {
     it('Tests if recommendation is deleted when score reaches -6', async () => {
         await scenarios.populateDB(10);
 
-        const recommendation = await prisma.$queryRaw`
+        const recommendation = await prisma.$queryRaw<IRecData[]>`
         SELECT *
             FROM recommendations
             ORDER BY random()
@@ -242,7 +243,7 @@ describe('Tests GET /recommendations/:id', () => {
         });
         await scenarios.populateDB(numOfRecommendations);
 
-        const recommendation = await prisma.$queryRaw`
+        const recommendation = await prisma.$queryRaw<IRecData[]>`
         SELECT *
             FROM recommendations
             ORDER BY random()

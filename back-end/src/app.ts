@@ -1,9 +1,9 @@
 import cors from 'cors';
 import express from 'express';
 import 'express-async-errors';
-import { errorHandlerMiddleware } from './middlewares/errorHandlerMiddleware.js';
-import recommendationRouter from './routers/recommendationRouter.js';
-import e2eRouter from './routers/e2eRouter.js';
+import { errorHandlerMiddleware } from './middlewares/errorHandlerMiddleware';
+import recommendationRouter from './routers/recommendationRouter';
+import e2eRouter from './routers/e2eRouter';
 import dotenv from 'dotenv';
 
 dotenv.config();

@@ -1,4 +1,4 @@
-import * as scenarioFactory from '../../tests/factories/scenarioFactory.js';
+import * as scenarioFactory from '../../tests/factories/scenarioFactory';
 
 export async function truncate() {
     await scenarioFactory.deleteAllDbData();
