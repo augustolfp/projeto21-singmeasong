@@ -1,9 +1,9 @@
 import supertest from 'supertest';
-import app from '../src/app';
-import { prisma } from '../src/database';
-import { IRecData } from './types/recommendationTypes';
-import * as scenarios from './factories/scenarioFactory';
-import * as recommendationFactory from './factories/recommendationFactory';
+import app from '../../src/app';
+import { prisma } from '../../src/database';
+import { IRecData } from '../types/recommendationTypes';
+import * as scenarios from '../factories/scenarioFactory';
+import * as recommendationFactory from '../factories/recommendationFactory';
 import { faker } from '@faker-js/faker';
 import 'jest-extended';
 
